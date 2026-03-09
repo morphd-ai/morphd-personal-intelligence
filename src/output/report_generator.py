@@ -1,5 +1,6 @@
 """Format and write the Weekly Intelligence Report to disk."""
 
+
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,16 @@ def generate_report(
 
     report_content = result.get("report_content", "")
 
+    disclaimer = (
+        "\n> *Insights are inferred patterns from your portable data. "
+        "Treat them as hypotheses to examine — not diagnoses.*\n"
+    )
+    report_content = report_content.replace(
+        "### EXECUTIVE SUMMARY\n",
+        f"### EXECUTIVE SUMMARY\n{disclaimer}",
+        1,
+    )
+
     # Add generation metadata footer
     footer = (
         "\n\n---\n"
@@ -30,7 +41,7 @@ def generate_report(
         f"*Timestamp: {datetime.now().isoformat()}*  \n"
         f"*Persona: {persona_id}*  \n"
         f"*Pipeline: analyze_domains → detect_patterns → synthesize_report*  \n"
-        f"*Model: Claude claude-sonnet-4-5-20250929 (Anthropic)*\n"
+        f"*Model: Claude Opus 4.6 / claude-opus-4-6 (Anthropic)*\n"
     )
 
     report_path.write_text(report_content + footer, encoding="utf-8")

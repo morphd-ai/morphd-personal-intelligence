@@ -15,7 +15,7 @@ from src.ingest.normalizer import serialize_for_llm
 
 def _get_llm() -> ChatAnthropic:
     return ChatAnthropic(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-opus-4-6",
         max_tokens=8192,
         temperature=0.3,
     )
