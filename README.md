@@ -56,15 +56,19 @@ Darius is the prototypical MORPHD user: high-functioning, data-rich, insight-poo
 data/
   └── personas/
         └── p03_darius_webb/     # DTI synthetic persona data
-              ├── conversations.json
-              ├── lifelog.json
-              ├── calendar.json
-              ├── transactions.json
-              └── social_posts.json
+              ├── consent.json         # Consent settings (allowed/prohibited uses, retention)
+              ├── persona_profile.json
+              ├── conversations.jsonl
+              ├── lifelog.jsonl
+              ├── calendar.jsonl
+              ├── transactions.jsonl
+              ├── emails.jsonl
+              ├── social_posts.jsonl
+              └── files_index.jsonl
 
 src/
   ├── ingest/
-  │     └── normalizer.py        # Parses and normalizes multi-source data
+  │     └── normalizer.py        # Parses, normalizes, and consent-checks multi-source data
   ├── agent/
   │     ├── graph.py             # LangGraph orchestration layer
   │     ├── nodes.py             # Agent nodes: analyze, pattern_detect, synthesize
@@ -74,7 +78,7 @@ src/
   └── main.py                    # Entry point
 
 reports/
-  └── darius_webb_week1.md       # Sample output report
+  └── (generated at runtime, gitignored)
 ```
 
 ---
@@ -106,10 +110,30 @@ cp .env.example .env
 # Edit .env and add: ANTHROPIC_API_KEY=your_key_here
 
 # Run the intelligence agent on the demo persona
-python src/main.py --persona p03_darius_webb
+python src/main.py
 ```
 
-The agent will process the persona data and generate a Weekly Intelligence Report in `/reports/`.
+The pipeline will:
+1. Read and print the persona's `consent.json` settings before processing any data
+2. Load and normalize 71+ records across 7 data sources
+3. Run domain analysis and cross-domain pattern detection via LangGraph
+4. Write a timestamped Weekly Intelligence Report to `/reports/`
+
+### Consent Verification
+
+Before any data is processed, the pipeline reads `consent.json` from the persona's data directory and prints a confirmation:
+
+```
+[CONSENT] Consent settings loaded
+  Persona ID   : p03
+  Dataset type : synthetic
+  Allowed uses : hackathon_demo, model_prompting, local_analysis, ...
+  Prohibited   : attempt_reidentification, sharing_outside_event, ...
+  Retention    : delete_after-2026-03-31
+[CONSENT] Proceeding with pipeline run.
+```
+
+If `consent.json` is missing, the pipeline logs a warning and continues — making consent verification explicit and auditable without being a hard blocker for development.
 
 ---
 

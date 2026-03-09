@@ -1,10 +1,51 @@
 """Ingest and normalize multi-source persona data from JSONL/JSON files."""
 
 import json
+import logging
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+def load_consent(data_dir: Path) -> dict:
+    """Read and log consent settings from consent.json in data_dir.
+
+    Returns the consent dict, or an empty dict if the file is missing.
+    """
+    consent_path = Path(data_dir) / "consent.json"
+    if not consent_path.exists():
+        logger.warning("No consent.json found at %s", consent_path)
+        print("[CONSENT] WARNING: No consent.json found. Proceeding without consent verification.")
+        return {}
+
+    with open(consent_path, encoding="utf-8") as f:
+        consent = json.load(f)
+
+    allowed = ", ".join(consent.get("allowed_uses", []))
+    prohibited = ", ".join(consent.get("prohibited_uses", []))
+    retention = consent.get("retention", "unspecified")
+    dataset_type = consent.get("dataset_type", "unspecified")
+    persona_id = consent.get("persona_id", "unknown")
+
+    logger.info("Consent loaded for persona_id=%s dataset_type=%s", persona_id, dataset_type)
+    logger.info("Allowed uses: %s", allowed)
+    logger.info("Prohibited uses: %s", prohibited)
+    logger.info("Retention policy: %s", retention)
+
+    print("[CONSENT] Consent settings loaded")
+    print(f"  Persona ID   : {persona_id}")
+    print(f"  Dataset type : {dataset_type}")
+    print(f"  Allowed uses : {allowed}")
+    print(f"  Prohibited   : {prohibited}")
+    print(f"  Retention    : {retention}")
+    if consent.get("notes"):
+        print(f"  Notes        : {consent['notes']}")
+    print("[CONSENT] Proceeding with pipeline run.\n")
+
+    return consent
 
 
 def _load_json(path: Path) -> dict:
@@ -75,6 +116,9 @@ def load_persona_data(data_dir: Path) -> dict[str, Any]:
         summary:    record counts and date range metadata
     """
     data_dir = Path(data_dir)
+
+    # Read and log consent settings before processing any data
+    load_consent(data_dir)
 
     # Load profile
     profile = _load_json(data_dir / "persona_profile.json")
